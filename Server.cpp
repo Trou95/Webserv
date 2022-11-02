@@ -23,7 +23,6 @@ void Server::Run() {
         }
         requestData = readData(requestFD);
         res = requestHandler.Process(requestData);
-        cout << "asdada" << endl;
         
         //printf("Request: \n%s\n",requestData.c_str());
 
