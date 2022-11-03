@@ -24,7 +24,7 @@ void Server::Run() {
         requestData = readData(requestFD);
         res = requestHandler.Process(requestData);
         
-        printf("Request: \n%s\n",requestData.c_str());
+        //printf("Request: \n%s\n",requestData.c_str());
 
         string response(res.responseHead + res.responseData);
 
