@@ -11,8 +11,10 @@
 using std::cout;
 using std::endl;
 using std::string;
+using std::vector;
 
 typedef string Request;
+typedef std::pair<string,string> UrlParams;
 
 
 enum E_HTTP_METHOD
@@ -40,6 +42,12 @@ struct stResponse
     string responseData;
 };
 
+struct stUrlData
+{
+    string filePath;
+    vector<UrlParams> data;
+};
+
 
 class RequestHandler
 {
@@ -50,9 +58,12 @@ class RequestHandler
 
  private:
    E_HTTP_METHOD getMethod(Request& request);
-   const string getFilePath(Request& request);
+   const stUrlData parseURL(Request& request);
    const string getHttpProtocol(Request& request);
    const std::vector<std::pair<string,string>> getData(Request& request);
+
+   const string getFilePath(Request& request);
+   const vector<UrlParams> getParams(Request& request);
 
    const string getMethodNameByIndex(E_HTTP_METHOD method);
 

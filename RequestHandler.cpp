@@ -13,24 +13,24 @@ stResponse RequestHandler::Process(Request request)
 {
     stRequestData data;
     stResponse res;
-    char buffer[100];
+    stUrlData urlData;
 
     memset(&data, 0, sizeof(stRequestData));
 
-
     E_HTTP_METHOD method = getMethod(request);
     data.method = getMethodNameByIndex(method);
-    data.filePath = getFilePath(request);
+    urlData = parseURL(request);
     data.httpProtocol = getHttpProtocol(request);
+    cout << urlData.filePath << endl;
+    data.filePath = urlData.filePath;
     data.data = getData(request);
 
     string fileText = FileReader::readFile(data.filePath);
-    sprintf(buffer,"Content-Length: %lu\n",fileText.length());
 
 
     res.responseHead = data.httpProtocol + "200 OK\n";
     res.responseHead += "Content-Type: text/html\n";
-    res.responseHead += buffer;
+    res.responseHead += "Content-Length: " + std::to_string(fileText.length());
     res.responseHead += "\n\n";
 
     res.responseData = fileText;
@@ -40,23 +40,17 @@ stResponse RequestHandler::Process(Request request)
 
 }
 
-const string RequestHandler::getFilePath(Request& request)
+const stUrlData RequestHandler::parseURL(Request& request)
 {
     string tmp = request;
-    size_t index = tmp.find(" ");
+    stUrlData data;
+    
+    string filePath = getFilePath(request);
+    vector<UrlParams> urlParams = getParams(request);
 
-    if(index != tmp.npos)
-    {
-       tmp = tmp.substr(0,index);
-       if(tmp == "/") {
-         tmp = DEFAULT_PATH;
-         tmp += ".html";
-       }
-       else 
-         tmp = tmp.substr(1,index);
-       request = request.substr(index + 1);
-    }
-    return tmp;
+    data.filePath = filePath;
+    data.data = urlParams;
+    return data;
 }
 
 E_HTTP_METHOD RequestHandler::getMethod(Request& request)
@@ -125,6 +119,49 @@ std::pair<string,string> RequestHandler::getDataVal(string text)
      key = text.substr(0, index);
     }
     return std::pair<string,string>(key,value);
+}
+
+const string RequestHandler::getFilePath(Request& request)
+{
+    int i = 0;
+    while(request[i] && request[i] != ' ' && request[i] != '?')
+        i++;
+    string filePath = request.substr(0,i);
+    if(filePath == "/"){
+        filePath = DEFAULT_PATH;
+        filePath += ".html";
+    }
+    else if(filePath[0] == '/')
+        filePath = filePath.substr(1);
+    request = request.substr(i);
+    return filePath;
+}
+
+const vector<UrlParams> RequestHandler::getParams(Request& request)
+{
+    vector<UrlParams> data;
+
+    if(request[0] == '?')
+    {
+        int i = 1,last_index = 1,last_equal = 1;
+        string key,value;
+        for(; request[i]; i++)
+        {
+            if(request[i] == '&' || request[i] == ' ')
+            {
+                key = request.substr(last_index, last_equal - last_index);
+                value = request.substr(last_equal + 1, i - (last_equal + 1));
+                last_index = i + 1;
+                data.push_back(std::pair<string,string>(key,value));
+                if(request[i] == ' ')
+                    break;
+            }
+            else if(request[i] == '=')
+                last_equal = i;
+        }
+        request = request.substr(i + 1);
+    }
+    return data;
 }
 
 const string RequestHandler::getMethodNameByIndex(E_HTTP_METHOD method)
