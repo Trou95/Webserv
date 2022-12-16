@@ -7,9 +7,11 @@ std::string FileReader::readFile(std::string filepath)
 
     if(file.is_open())
     {
-        std::string tmp;
-        while(std::getline(file,tmp))
-            res.append(tmp);
+        long long fileLen = getFileLen(filepath);
+        char *buffer = new char[fileLen + 1];
+        file.read(buffer,fileLen);
+        res = buffer;
+        delete[] buffer;
     }
     return res;
 }
@@ -20,4 +22,11 @@ std::string FileReader::getFileType(std::string filepath)
     if(index != filepath.npos)
         return filepath.substr(index + 1);
     return "";
+}
+
+long long FileReader::getFileLen(const std::string filepath) {
+    std::ifstream in(filepath, std::ifstream::ate | std::ifstream::binary);
+    auto result = in.tellg();
+    in.close();
+    return result;
 }

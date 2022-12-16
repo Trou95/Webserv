@@ -5,7 +5,8 @@
 #include <fstream>
 
 class FileReader{
-
+private:
+    static long long getFileLen(const std::string filepath);
 public:
     static std::string readFile(const std::string filepath);
     static std::string getFileType(std::string filepath);
