@@ -15,7 +15,6 @@ using std::vector;
 using std::map;
 
 #define SERVER_KEY "server"
-#define SERVER_KEY_LEN sizeof(SERVER_KEY)
 
 struct stScope
 {
