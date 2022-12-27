@@ -24,7 +24,8 @@ std::vector<std::string> str_split(const std::string& str, char c)
     {
         tmp = str.substr(last_index, index - last_index);
         res.push_back(tmp);
-        last_index = index + str_space_len(&str[index]);
+        size_t len = str_space_len(&str[index]);
+        last_index = index + ((len > 0) ? len : 1);
     }
     if(last_index < str.length() && res.size() > 0)
     {
@@ -32,4 +33,16 @@ std::vector<std::string> str_split(const std::string& str, char c)
         res.push_back(tmp);
     }
     return res;
+}
+
+std::string str_trim(const std::string& str, char c)
+{
+    int start = 0;
+    int end = str.length() - 1;
+
+    while(str[start] && str[start] == ' ')
+        start++;
+    while(str[end] && str[end] == ' ')
+        end--;
+    return str.substr(start,end - start);
 }

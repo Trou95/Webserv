@@ -6,5 +6,6 @@
 
 size_t str_space_len(const char* str);
 std::vector<std::string> str_split(const std::string& str, char c);
+std::string str_trim(const std::string& str, char c);
 
 
