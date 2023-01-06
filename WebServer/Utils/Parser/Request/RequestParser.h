@@ -29,6 +29,8 @@ class RequestParser
     public:
 
         stRequest parseRequest(const string& request);
+        string parseURL(const string& request, const string& index);
+        string getPath(string request);
 
 
 };

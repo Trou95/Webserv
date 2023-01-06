@@ -6,7 +6,6 @@ stRequest RequestParser::parseRequest(const std::string &request)
     stRequest res;
     vector<string> requestInfo;
 
-    std::cout << "asdasdas" << std::endl;
     vector<string> lines = str_split(request, '\n');
     if(!lines.empty())
     {
@@ -25,6 +24,33 @@ stRequest RequestParser::parseRequest(const std::string &request)
         }
     }
     return res;
+}
+
+string RequestParser::parseURL(const string &request, const string& index)
+{
+    string ret = request;
+
+    int found_index = request.find_last_of('/');
+    if(found_index != request.npos)
+    {
+        found_index = request.find_last_of('.');
+        if(found_index == request.npos)
+            ret = request + "/" + index;
+    }
+
+    return ret;
+}
+
+string RequestParser::getPath(string request)
+{
+    int index = request.find_last_of('.');
+    if(index != request.npos)
+    {
+        for(; request[index]; index--)
+            if(request[index] == '/')
+                return request.substr(0, index);
+    }
+    return request;
 }
 
 std::pair<string,string> RequestParser::parseHeader(const std::string &request)

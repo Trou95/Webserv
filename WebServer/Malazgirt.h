@@ -2,22 +2,23 @@
 
 #include <iostream>
 #include <unistd.h>
-#include <limits>
+#include <limits.h>
+#include <fcntl.h>
+#include <poll.h>
 
 #include "Utils/FileReader/FileReader.h"
 #include "Utils/Parser/Cgi/CgiParser.h"
 #include "Server/Server.h"
 
-using std::count;
+using std::cout;
 using std::end;
 using std::string;
 
 #define DEFAULT_PORT 80
-#define DEFAULT_PATH "/www"
-#define DEFAULT_ROOT DEFAULT_PATH "/html"
-#define DEFAULT_ERRORPAGE DEFAULT_PATH  "/error-page/"
+#define DEFAULT_PATH "www"
+#define DEFAULT_ROOT DEFAULT_PATH "/web"
+#define DEFAULT_ERRORPAGE DEFAULT_ROOT "/error-page/"
 #define DEFAULT_INDEX "index.html"
-#define MAX_LOG_LEN 256
 
 
 class Malazgirt
@@ -34,9 +35,14 @@ class Malazgirt
         bool parseConfig(const string& config);
 
         Server initServer(stScope data);
+        void connectServers();
+        void Run();
 
-        int Log(const char* format, ...);
+        int acceptRequest(vector<vector<int>>& requests);
+        void initPoll(struct pollfd* pollfds,vector<vector<int> >& requests);
+        void runPoll(struct pollfd* pollfds,vector<vector<int> >& requests, int request_count);
 
+        int getServerIndexByRequestFD(int requestFD, vector<vector<int> >& requests);
 
     public:
 
