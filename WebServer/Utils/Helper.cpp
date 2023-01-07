@@ -67,11 +67,11 @@ std::string str_trim(const std::string& str, char c)
     int start = 0;
     int end = str.length() - 1;
 
-    while(str[start] && str[start] == ' ')
+    while(str[start] == ' ')
         start++;
-    while(str[end] && str[end] == ' ')
+    while(str[end] == ' ' || str[end] == '\r')
         end--;
-    return str.substr(start,end - start);
+    return str.substr(start,end- start + 1);
 }
 
 int Log(const char *type, const char* format, ...)
