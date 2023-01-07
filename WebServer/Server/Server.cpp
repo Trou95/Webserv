@@ -122,6 +122,7 @@ string Server::runCGI(const Location& location, const stRequest &request)
             res += buffer;
         }
         wait(NULL);
+        dup2(1,tmpFD);
         return res;
     }
     return "";
