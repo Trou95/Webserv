@@ -4,6 +4,7 @@
 #include <string>
 #include <string.h>
 #include <cstring>
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/socket.h>

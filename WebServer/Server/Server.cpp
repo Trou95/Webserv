@@ -15,6 +15,7 @@ bool Server::connect()
         Log(LOG_INFO,"Error: %s socket",NAME);
         return false;
     }
+    fcntl(_serverFD, F_SETFL, O_NONBLOCK);
 
     int enable = 1;
     if(setsockopt(_serverFD, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0) {
@@ -96,8 +97,8 @@ string Server::runCGI(const Location& location, const stRequest &request)
     if(pid == 0)
     {
         char** tmp = new char*[3];
-        tmp[0] = (char*)str_join("/bin/",location.cgiPath.c_str());
-        tmp[1] = (char*)strdup(requestParser.parseURL(ROOT + request.endPoint, location.index).c_str());
+        tmp[0] = str_join("/bin/",location.cgiPath.c_str());
+        tmp[1] = strdup(requestParser.parseURL(ROOT + request.endPoint, location.index).c_str());
         tmp[2] = 0;
 
         map<string,string>::const_iterator it = request.requestHeaders.find("Cookie");
@@ -107,19 +108,30 @@ string Server::runCGI(const Location& location, const stRequest &request)
         close(fd[0]);
         close(fd[1]);
         execve(tmp[0],tmp,env);
-
+        exit(1);
     }
     else
     {
         int count;
         char buffer[1024];
         string res;
+        struct pollfd p_fd;
 
         close(fd[1]);
-        while((count = read(fd[0], buffer, sizeof(buffer))) > 0)
+        p_fd.fd = fd[0];
+        p_fd.events = POLLIN;
+
+        int ret = poll(&p_fd, 1, 1000);
+        if(ret > 0)
         {
-            buffer[count] = '\0';
-            res += buffer;
+            if(p_fd.revents & POLLIN)
+            {
+                while((count = read(fd[0], buffer, sizeof(buffer))) > 0)
+                {
+                    buffer[count] = '\0';
+                    res += buffer;
+                }
+            }
         }
         wait(NULL);
         dup2(1,tmpFD);
@@ -202,11 +214,16 @@ int Server::isValidEndPoint(const string& request, const string& method)
 
 string Server::readRequest(int requestFD)
 {
+    int count;
+    char buffer[1024];
     string data;
-    char c;
 
-    while(recv(requestFD, &c, 1, MSG_DONTWAIT) > 0)
-        data += c;
+
+    while((count = recv(requestFD, buffer, sizeof(buffer), MSG_DONTWAIT)) > 0)
+    {
+        buffer[count] = '\0';
+        data += buffer;
+    }
     return data;
 }
 

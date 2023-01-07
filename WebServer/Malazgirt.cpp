@@ -53,7 +53,6 @@ int Malazgirt::acceptRequest(vector <vector<int>> &requests)
     {
         vector<int> tmp;
 
-        fcntl(servers[i].getServerFD(), F_SETFL, O_NONBLOCK);
         while(1)
         {
             requestFD = accept(servers[i].getServerFD(), NULL, NULL);

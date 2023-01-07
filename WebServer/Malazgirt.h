@@ -3,7 +3,6 @@
 #include <iostream>
 #include <unistd.h>
 #include <limits.h>
-#include <fcntl.h>
 #include <poll.h>
 
 #include "Utils/FileReader/FileReader.h"
