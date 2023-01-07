@@ -2,8 +2,10 @@
 
 #include <iostream>
 #include <string>
+#include <string.h>
 #include <cstring>
 #include <unistd.h>
+#include <sys/wait.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <poll.h>
@@ -24,10 +26,23 @@ using std::vector;
 using std::map;
 
 
+enum E_HTTP_STATUS
+{
+    HTTP_200 = 200,
+    HTTP_404 = 404
+};
+
 struct stResponse
 {
     string responseHead;
     string responseData;
+};
+
+struct stResponseInfo
+{
+    E_HTTP_STATUS status;
+    int index;
+    string info;
 };
 
 
@@ -59,7 +74,11 @@ class Server
 
         string readRequest(int requestFD);
         int isValidEndPoint(const string& request, const string& method);
-        string getResponseFile(const stRequest& request);
+        string runCGI(const Location& location, const stRequest& request);
+        string initResponse(const stRequest& request);
+        stResponse parseResponse(string& response, const stResponseInfo& responseInfo);
+        stResponseInfo getResponseInfo(const stRequest& request);
+        char **initEnv(const char* filePath, const char* cookies);
 
     public:
 

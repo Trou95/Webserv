@@ -37,7 +37,6 @@ string RequestParser::parseURL(const string &request, const string& index)
         if(found_index == request.npos)
             ret = request + "/" + index;
     }
-
     return ret;
 }
 

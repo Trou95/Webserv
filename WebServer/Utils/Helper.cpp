@@ -27,6 +27,19 @@ int str_get_chrindex(const char *str, char c)
     return (-1);
 }
 
+char	*str_join(char const *s1, char const *s2)
+{
+    char	*ptr = new char[strlen(s1) + strlen(s2) + 1];
+
+    int i = 0;
+    for(int n = 0; s1[n]; n++)
+        ptr[i++] = s1[n];
+    for(int n = 0; s2[n] >= 32; n++)
+        ptr[i++] = s2[n];
+    ptr[i] = '\0';
+    return (ptr);
+}
+
 std::vector<std::string> str_split(const std::string& str, char c)
 {
     std::vector<std::string> res;
