@@ -49,6 +49,7 @@ void Server::HandleRequest(int requestFD)
 
     tmp = readRequest(requestFD);
 
+
     request = requestParser.parseRequest(tmp);
     response = initResponse(request);
 
@@ -102,7 +103,9 @@ string Server::runCGI(const Location& location, const stRequest &request)
         tmp[2] = 0;
 
         map<string,string>::const_iterator it = request.requestHeaders.find("Cookie");
-        char **env = it != request.requestHeaders.end() ? initEnv(tmp[1],it->second.c_str()) : NULL;
+
+
+        char **env = initEnv(tmp[1],request);
 
         dup2(fd[1],1);
         close(fd[0]);
@@ -116,6 +119,7 @@ string Server::runCGI(const Location& location, const stRequest &request)
         char buffer[1024];
         string res;
         struct pollfd p_fd;
+
 
         close(fd[1]);
         p_fd.fd = fd[0];
@@ -165,13 +169,27 @@ stResponse Server::parseResponse(string &response, const stResponseInfo &respons
     return res;
 }
 
-char **Server::initEnv(const char *filePath, const char *cookies)
+char **Server::initEnv(const char *filePath, const stRequest& request)
 {
-    char **env = new char*[3];
+    char **env = new char*[10];
+    int index = 4;
 
-    env[0] = str_join("SCRIPT_FILENAME=",filePath);
-    env[1] = str_join("HTTP_COOKIE=",cookies);
-    env[2] = 0;
+    env[0] = strdup("GATEWAY_INTERFACE=CGI/1.1");
+    env[1] = strdup("REDIRECT_STATUS=true");
+    env[2] = str_join("REQUEST_METHOD=",request.method.c_str());
+    env[3] = str_join("SCRIPT_FILENAME=",filePath);
+
+    map<string,string>::const_iterator it = request.requestHeaders.find("Cookie");
+    map<string,string>::const_iterator end = request.requestHeaders.end();
+    if(it != end)
+        env[index++] = str_join("HTTP_COOKIE=",it->second.c_str());
+    it = request.requestHeaders.find("Content-Length");
+    if(it != end)
+        env[index++] = str_join("CONTENT_LENGTH=",it->second.c_str());
+    it = request.requestHeaders.find("Content-Type");
+    if(it != end)
+        env[index++] = str_join("CONTENT_TYPE=",it->second.c_str());
+    env[index] = 0;
     return env;
 }
 
@@ -201,7 +219,7 @@ int Server::isValidEndPoint(const string& request, const string& method)
     {
         if(tmp == locations[i].endPoint)
         {
-            for(int n = size; n >= 0; n--)
+            for(int n = locations[i].allowedMethods.size() - 1; n >= 0; n--)
             {
                 if(method == locations[i].allowedMethods[n])
                     return i;
@@ -237,9 +255,13 @@ void Server::addLocation(stScope data)
     iter = data.values.find("index");
     tmp.index = iter != data.values.end() ? str_trim(iter->second[0], ' ') : "index.html";
 
-    iter = data.values.find("allow_methods");
+    iter = data.values.find("allowed_methods");
     if(iter != data.values.end())
+    {
+        for(int i = iter->second.size() - 1; i >= 0; i--)
+            iter->second[i] = str_trim(iter->second[i],' ');
         tmp.allowedMethods = iter->second;
+    }
     else
     {
         const char* methods[] = {"GET"};

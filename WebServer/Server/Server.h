@@ -79,7 +79,7 @@ class Server
         string initResponse(const stRequest& request);
         stResponse parseResponse(string& response, const stResponseInfo& responseInfo);
         stResponseInfo getResponseInfo(const stRequest& request);
-        char **initEnv(const char* filePath, const char* cookies);
+        char **initEnv(const char* filePath, const stRequest& request);
 
     public:
 
