@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 #include <string.h>
+#include <sys/stat.h>
+#include <dirent.h>
 #include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
@@ -80,6 +82,12 @@ class Server
         stResponse parseResponse(string& response, const stResponseInfo& responseInfo);
         stResponseInfo getResponseInfo(const stRequest& request);
         char **initEnv(const char* filePath, const stRequest& request);
+
+        void uploadFile(const stRequest& request, const string& requestcontent,const string& type);
+
+        vector<string> getAllDirectoryies(const string& filePath, int hidden_files);
+        bool isValidFile(const string& filePath);
+        bool isDirectory(const string& filePath);
 
     public:
 
