@@ -136,8 +136,7 @@ Server Malazgirt::initServer(stScope data)
 {
     int server_port;
     string server_name;
-    string server_index;
-    string server_errorpage;
+    vector<pair<int, string> > error_pages;
     map<string,vector<string> >::iterator iter;
 
 
@@ -158,11 +157,13 @@ Server Malazgirt::initServer(stScope data)
     iter = data.values.find("root");
     string server_root = iter != data.values.end() ? str_trim(iter->second[0], ' ') : CURRENT_DIRECTORY + DEFAULT_ROOT;
 
-    iter = data.values.find("error_page");
-    server_errorpage = iter != data.values.end() ? str_trim(iter->second[0], ' ') : DEFAULT_ERRORPAGE;
+    iter = data.values.find("error_page_404");
+    error_pages.push_back(pair<int, string>(404, iter != data.values.end() ? DEFAULT_ERRORPAGE + str_trim(iter->second[0], ' ') : DEFAULT_ERRORPAGE "404.html"));
 
+    iter = data.values.find("error_page_403");
+    error_pages.push_back(pair<int, string>(403, iter != data.values.end() ? DEFAULT_ERRORPAGE + str_trim(iter->second[0], ' ') : DEFAULT_ERRORPAGE "403.html"));
 
-    return Server(server_port,server_name,server_root,server_errorpage);
+    return Server(server_port,server_name,server_root, error_pages);
 }
 
 

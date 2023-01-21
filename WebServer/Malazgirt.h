@@ -12,6 +12,7 @@
 using std::cout;
 using std::end;
 using std::string;
+using std::pair;
 
 #define DEFAULT_PORT 80
 #define DEFAULT_PATH "www"

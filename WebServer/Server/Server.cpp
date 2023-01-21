@@ -1,9 +1,15 @@
 #include "Server.h"
 
-Server::Server(int PORT, std::string NAME, std::string ROOT, std::string ERROR_PAGE) :
-    PORT(PORT), NAME(NAME), ROOT(ROOT), ERROR_PAGE(ERROR_PAGE)
+Server::Server(int PORT, std::string NAME, std::string ROOT, vector<pair<int, string> > error_pages) :
+    PORT(PORT), NAME(NAME), ROOT(ROOT)
 {
-    this->ERROR_PAGE = FileReader::readFile(this->ERROR_PAGE + "404.html");
+    for(int i = error_pages.size() - 1; i >= 0; i--)
+    {
+        if(error_pages[i].first == 404)
+            this->ERROR_PAGE_404 =  FileReader::readFile(error_pages[i].second);
+        else if(error_pages[i].first == 403)
+            this->ERROR_PAGE_403 = FileReader::readFile(error_pages[i].second);
+    }
 }
 
 
@@ -218,7 +224,7 @@ stResponseInfo Server::getResponseInfo(const stRequest &request)
     if(index == -1)
     {
         response.status = HTTP_404;
-        response.info = this->ERROR_PAGE;
+        response.info = this->ERROR_PAGE_404;
         return response;
     }
     response.status = HTTP_200;

@@ -70,7 +70,8 @@ class Server
         int PORT;
         string NAME;
         string ROOT;
-        string ERROR_PAGE;
+        string ERROR_PAGE_404;
+        string ERROR_PAGE_403;
 
         vector<Location> locations;
         RequestParser requestParser;
@@ -91,7 +92,7 @@ class Server
 
     public:
 
-        Server(int PORT,string NAME, string ROOT, string ERROR_PAGE);
+        Server(int PORT,string NAME, string ROOT, vector<pair<int, string> > ERROR_PAGES);
 
         bool connect();
         void addLocation(stScope location);
