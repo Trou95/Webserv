@@ -43,7 +43,7 @@ void Malazgirt::Run()
 
 }
 
-int Malazgirt::acceptRequest(vector <vector<int>> &requests)
+int Malazgirt::acceptRequest(vector <vector<int> > &requests)
 {
     int request_count;
     int requestFD;

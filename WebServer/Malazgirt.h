@@ -37,7 +37,7 @@ class Malazgirt
         void connectServers();
         void Run();
 
-        int acceptRequest(vector<vector<int>>& requests);
+        int acceptRequest(vector<vector<int> >& requests);
         void initPoll(struct pollfd* pollfds,vector<vector<int> >& requests);
         void runPoll(struct pollfd* pollfds,vector<vector<int> >& requests, int request_count);
 
