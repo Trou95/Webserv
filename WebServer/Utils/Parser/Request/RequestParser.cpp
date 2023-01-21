@@ -26,6 +26,8 @@ stRequest RequestParser::parseRequest(const std::string &request)
     return res;
 }
 
+
+
 string RequestParser::parseURL(const string &request, const string& index)
 {
     string ret = request;
@@ -47,7 +49,7 @@ string RequestParser::getPath(string request)
     {
         for(; request[index]; index--)
             if(request[index] == '/')
-                return request.substr(0, index);
+                return request.substr(0, index + 1);
     }
     return request;
 }

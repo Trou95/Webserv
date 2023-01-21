@@ -7,6 +7,8 @@ Malazgirt::Malazgirt(const std::string &configPath) : CONFIG_PATH(configPath)
     string config;
 
     config = str_clear(readConfig());
+
+    filetypes = parseFileTypes();
     if(parseConfig(config) == 0)
         return;
 
@@ -163,7 +165,7 @@ Server Malazgirt::initServer(stScope data)
     iter = data.values.find("error_page_403");
     error_pages.push_back(pair<int, string>(403, iter != data.values.end() ? DEFAULT_ERRORPAGE + str_trim(iter->second[0], ' ') : DEFAULT_ERRORPAGE "403.html"));
 
-    return Server(server_port,server_name,server_root, error_pages);
+    return Server(server_port,server_name,server_root, error_pages,filetypes);
 }
 
 
@@ -183,8 +185,26 @@ bool Malazgirt::parseConfig(const std::string &config)
             servers[i].addLocation(res[i].scopes[j]);
         }
     }
-
     return 1;
+}
+
+map<string,string> Malazgirt::parseFileTypes()
+{
+    map<string,string> ret;
+
+    string res = FileReader::readFile("Conf/types.malazgirt");
+    vector<string> lines = str_split(res, '\n');
+    for(int i = 0; i < lines.size(); i++)
+    {
+        int index = lines[i].find(":");
+        if(index != string::npos)
+        {
+            string key = lines[i].substr(0,index);
+            string value = lines[i].substr(index + 1);
+            ret.insert(pair<string,string>(key,value));
+        }
+    }
+    return ret;
 }
 
 const string Malazgirt::readConfig()

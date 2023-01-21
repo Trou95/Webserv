@@ -32,6 +32,7 @@ using std::map;
 enum E_HTTP_STATUS
 {
     HTTP_200 = 200,
+    HTTP_403 = 403,
     HTTP_404 = 404
 };
 
@@ -46,6 +47,8 @@ struct stResponseInfo
     E_HTTP_STATUS status;
     int index;
     string info;
+    string contentType;
+    string filePath;
 };
 
 
@@ -76,13 +79,15 @@ class Server
         vector<Location> locations;
         RequestParser requestParser;
 
+        static map<string,string> filetypes;
+
         string readRequest(int requestFD);
         int isValidEndPoint(const string& request, const string& method);
-        string runCGI(const Location& location, const stRequest& request);
+        string runCGI(const Location& location, const stRequest& request, const stResponseInfo& responseInfo);
         string initResponse(const stRequest& request);
         stResponse parseResponse(string& response, const stResponseInfo& responseInfo);
         stResponseInfo getResponseInfo(const stRequest& request);
-        char **initEnv(const char* filePath, const stRequest& request);
+        char **initEnv(const char* filePath, const stRequest& request, const string& contentType);
 
         void uploadFile(const stRequest& request, const string& requestcontent,const string& type);
 
@@ -90,9 +95,11 @@ class Server
         bool isValidFile(const string& filePath);
         bool isDirectory(const string& filePath);
 
+        string getContentType(const string& fileExtension);
+
     public:
 
-        Server(int PORT,string NAME, string ROOT, vector<pair<int, string> > ERROR_PAGES);
+        Server(int PORT,string NAME, string ROOT, vector<pair<int, string> > ERROR_PAGES, map<string,string>& filetypes);
 
         bool connect();
         void addLocation(stScope location);

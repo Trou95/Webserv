@@ -31,8 +31,11 @@ class Malazgirt
 
         vector<Server> servers;
 
+        map<string,string> filetypes;
+
         const string readConfig();
         bool parseConfig(const string& config);
+        map<string,string> parseFileTypes();
 
         Server initServer(stScope data);
         void connectServers();

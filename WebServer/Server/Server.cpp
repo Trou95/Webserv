@@ -1,8 +1,12 @@
 #include "Server.h"
 
-Server::Server(int PORT, std::string NAME, std::string ROOT, vector<pair<int, string> > error_pages) :
+map<string,string> Server::filetypes;
+
+Server::Server(int PORT, std::string NAME, std::string ROOT, vector<pair<int, string> > error_pages, map<string,string>& filetypes) :
     PORT(PORT), NAME(NAME), ROOT(ROOT)
 {
+    Server::filetypes = filetypes;
+
     for(int i = error_pages.size() - 1; i >= 0; i--)
     {
         if(error_pages[i].first == 404)
@@ -61,10 +65,6 @@ void Server::HandleRequest(int requestFD)
     response = initResponse(request);
     send(requestFD, response.c_str(), response.length() ,MSG_DONTWAIT);
 
-    //map<string,string>::iterator it = request.requestHeaders.find("Content-Type");
-    //if(it != request.requestHeaders.end() && it->second.find("multipart/form-data") != it->second.npos)
-        //uploadFile(request,tmp,it->second);
-
     close(requestFD);
 }
 
@@ -72,26 +72,26 @@ string Server::initResponse(const stRequest& request)
 {
     stResponse response;
 
-
     stResponseInfo responseInfo = getResponseInfo(request);
-    if(responseInfo.status == HTTP_200 && !locations[responseInfo.index].cgiPath.empty())
+    if(responseInfo.status == HTTP_200 && !locations[responseInfo.index].cgiPath.empty() && responseInfo.contentType == "text/html")
     {
-        string res = runCGI(locations[responseInfo.index],request);
+        string res = runCGI(locations[responseInfo.index],request,responseInfo);
         response = parseResponse(res, responseInfo);
     }
     else
     {
-        response.responseHead = "HTTP/1.1 " + std::to_string(responseInfo.status) + " OK\n";
-        response.responseHead += "Content-Type: text/html\n";
-        response.responseHead += "Content-Length: " + std::to_string(responseInfo.info.length());
-        response.responseHead += "\r\n\r\n";
-        response.responseData = responseInfo.info;
+            response.responseHead = "HTTP/1.1 " + std::to_string(responseInfo.status) + " OK\r\n";
+            response.responseHead += "Content-Type: " + responseInfo.contentType + "\r\n";
+            response.responseHead += "Content-Length: " + std::to_string(responseInfo.info.length());
+            response.responseHead += "\r\n\r\n";
+            response.responseData = responseInfo.info;
+
     }
     string ret = response.responseHead + response.responseData;
     return ret;
 }
 
-string Server::runCGI(const Location& location, const stRequest &request)
+string Server::runCGI(const Location& location, const stRequest &request, const stResponseInfo &responseInfo)
 {
     int fd[2];
     int fd2[2];
@@ -109,12 +109,12 @@ string Server::runCGI(const Location& location, const stRequest &request)
     if(pid == 0)
     {
         char** tmp = new char*[3];
-        tmp[0] = str_join("/bin/",location.cgiPath.c_str());
-        tmp[1] = strdup(requestParser.parseURL(ROOT + request.endPoint, location.index).c_str());
+        tmp[0] = "/Users/dev_gdemirta/.brew/bin/php-cgi";
+        tmp[1] = str_join("",responseInfo.filePath.c_str());
         tmp[2] = 0;
 
 
-        char **env = initEnv(tmp[1],request);
+        char **env = initEnv(tmp[1],request,responseInfo.contentType);
 
         dup2(fd[1],1);
         dup2(fd2[0], 0);
@@ -184,7 +184,7 @@ stResponse Server::parseResponse(string &response, const stResponseInfo &respons
     return res;
 }
 
-char **Server::initEnv(const char *filePath, const stRequest& request)
+char **Server::initEnv(const char *filePath, const stRequest& request, const string& contentType)
 {
     char **env = new char*[10];
     int index = 4;
@@ -205,8 +205,7 @@ char **Server::initEnv(const char *filePath, const stRequest& request)
     else if(it != end)
         env[index++] = str_join("CONTENT_LENGTH=",it->second.c_str());
     it = request.requestHeaders.find("Content-Type");
-    if(it != end)
-        env[index++] = str_join("CONTENT_TYPE=",it->second.c_str());
+    env[index++] = str_join("CONTENT_TYPE=",it != request.requestHeaders.end() ? it->second.c_str() : contentType.c_str());
     env[index] = 0;
 
     for (int i = 0; env[i]; ++i) {
@@ -220,16 +219,61 @@ stResponseInfo Server::getResponseInfo(const stRequest &request)
 {
     stResponseInfo response;
 
-    int index = isValidEndPoint(request.endPoint, request.method);
-    if(index == -1)
-    {
+    int index_location = isValidEndPoint(request.endPoint, request.method);
+    if(index_location == -1) {
         response.status = HTTP_404;
+        response.contentType = "text/html";
         response.info = this->ERROR_PAGE_404;
-        return response;
+        cout << "1" << endl;
     }
-    response.status = HTTP_200;
-    response.index = index;
-    response.info = FileReader::readFile(requestParser.parseURL(ROOT + request.endPoint,locations[index].index));
+    else if(index_location == -2) {
+        response.status = HTTP_403;
+        response.contentType = "text/html";
+        response.info = this->ERROR_PAGE_403;
+    }
+    else {
+        string tmp = request.endPoint;
+        int index = request.endPoint.find_last_of('.');
+        if(index == request.endPoint.npos)
+        {
+            if(tmp[tmp.length() - 1] != '/')
+                tmp += '/';
+            tmp += locations[index_location].index;
+        }
+        tmp = ROOT + tmp;
+        if(isValidFile(tmp) == false) {
+            response.status = HTTP_404;
+            response.contentType = "text/html";
+            response.info = this->ERROR_PAGE_404;
+            cout << "2" << endl;
+        }
+        else {
+            response.status = HTTP_200;
+            response.index = index_location;
+            response.filePath = tmp;
+            response.contentType = getContentType(tmp.substr(tmp.find_last_of(".")));
+
+            cout << "file " << tmp << endl;
+
+            ifstream file(tmp, std::ios::ate | std::ios::binary);
+            auto size = file.tellg();
+            char *image = new char[size];
+            file.seekg(0, std::ios::beg);
+            file.read(image,size);
+            image[size] = 0;
+            file.close();
+            cout << "Size " << size << endl;
+            for(int i = 0; i < size; i++)
+                response.info += image[i];
+
+            cout << response.info.length() << endl;
+
+            std::ofstream file2("asdasd.jpeg", std::ios::binary);
+            file2 << response.info;
+
+
+        }
+    }
     return response;
 }
 
@@ -238,6 +282,9 @@ int Server::isValidEndPoint(const string& request, const string& method)
     string tmp = requestParser.getPath(request);
     int size = locations.size() - 1;
 
+    if(tmp[tmp.length() - 1] == '/')
+        tmp.pop_back();
+    cout << "method " << tmp << endl;
     for(int i = size; i >= 0; i--)
     {
         if(tmp == locations[i].endPoint)
@@ -247,11 +294,13 @@ int Server::isValidEndPoint(const string& request, const string& method)
                 if(method == locations[i].allowedMethods[n])
                     return i;
             }
-            return -1;
+            return -2;
         }
     }
     return -1;
 }
+
+
 
 string Server::readRequest(int requestFD)
 {
@@ -307,7 +356,7 @@ void Server::uploadFile(const stRequest &request, const string &requestcontent, 
            file << file_content;
            file.close();
 
-           std::ifstream file2("image.jpg", std::ios::binary);
+           std::ifstream file2("image.jpeg", std::ios::binary);
            std::ofstream file3("image.txt", std::ios::binary);
            file3 << file2.rdbuf();
            file3.close();
@@ -352,6 +401,17 @@ void Server::addLocation(stScope data)
         tmp.cgiPath = iter->second[0];
 
     locations.push_back(tmp);
+}
+
+string Server::getContentType(const string &fileExtension)
+{
+    if(fileExtension == ".html" || fileExtension == ".php" || fileExtension == ".py")
+        return "text/html";
+    else
+    {
+        map<string,string>::iterator it = filetypes.find(fileExtension);
+        return it != filetypes.end() ? it->second : "text/html";
+    }
 }
 
 vector <string> Server::getAllDirectoryies(const string& filePath, int hidden_files)
