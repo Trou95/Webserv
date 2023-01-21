@@ -27,6 +27,21 @@ int str_get_chrindex(const char *str, char c)
     return (-1);
 }
 
+std::string str_clear(const std::string& str)
+{
+    std::string res;
+
+    for(int i = 0,len = str.length(); i < len; i++)
+    {
+        if(str[i] == '\r')
+            continue;
+        res += str[i];
+        while((str[i] == '\n' || str[i] == '\r') && (str[i + 1] == '\n' || str[i + 1] == '\r'))
+            i++;
+    }
+    return res;
+}
+
 char	*str_join(char const *s1, char const *s2)
 {
     char	*ptr = new char[strlen(s1) + strlen(s2) + 1];

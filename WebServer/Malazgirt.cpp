@@ -6,7 +6,7 @@ Malazgirt::Malazgirt(const std::string &configPath) : CONFIG_PATH(configPath)
     char buffer[PATH_MAX];
     string config;
 
-    config = readConfig();
+    config = str_clear(readConfig());
     if(parseConfig(config) == 0)
         return;
 

@@ -10,7 +10,7 @@ vector<stScope> CgiParser::Parse(const string& str)
         {
             if(str_getlast(str,i) == '{')
             {
-                size_t end_index = i + getScopeEnd(&str[i + 1]);
+                size_t end_index = i + getScopeEnd(&str[i]);
                 if(end_index == str.npos)
                     return vector<stScope>();
                 vector<string> tmpstr = str_split(str.substr(last_index, i - last_index), ' ');
@@ -19,7 +19,7 @@ vector<stScope> CgiParser::Parse(const string& str)
                     ParseScope(str.substr(i + 1, end_index - i),0);
                 }
                 i = end_index + 1;
-                last_index = i;
+                last_index = i + 1;
             }
         }
     }
@@ -39,9 +39,9 @@ void CgiParser::ParseScope(const string &str,int index)
                 size_t end_index = i + getScopeEnd(&str[i + 1]);
                 if(end_index == str.npos)
                     return;
-                vector<string> tmpstr = str_split(str.substr(last_index, (i - 1) - last_index), ' ');
+                vector<string> tmpstr = str_split(str.substr(last_index, i - last_index), ' ');
                 addScope(tmpstr[0],vector<string>(tmpstr.begin() + 1, tmpstr.end()), 1);
-                ParseScope(str.substr(i + 1, end_index - i), 1);
+                ParseScope(str.substr(i, end_index - i), 1);
                 i = end_index + 1;
                 last_index = i;
             }
@@ -103,7 +103,7 @@ size_t CgiParser::getScopeEnd(const string &str)
     for(int i = 0; str[i]; i++)
     {
         if(str[i] == '{') {
-            size_t index = str.find("}", i + 1);
+            size_t index = str.find_first_of("}",i + 1);
             if(index == str.npos)
                 return str.npos;
             i = index + 1;
