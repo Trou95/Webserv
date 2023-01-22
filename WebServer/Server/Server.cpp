@@ -2,8 +2,8 @@
 
 map<string,string> Server::filetypes;
 
-Server::Server(int PORT, std::string NAME, std::string ROOT, vector<pair<int, string> > error_pages, map<string,string>& filetypes) :
-    PORT(PORT), NAME(NAME), ROOT(ROOT)
+Server::Server(int PORT, std::string NAME, std::string ROOT, vector<pair<int, string> > error_pages, unsigned int client_limit, map<string,string>& filetypes) :
+    PORT(PORT), NAME(NAME), ROOT(ROOT), CLIENT_LIMIT(client_limit)
 {
     Server::filetypes = filetypes;
 
@@ -52,13 +52,13 @@ bool Server::connect()
 
 string Server::HandleRequest(int requestFD)
 {
-    string tmp;
+    string rawcontent;
     stRequest request;
 
-    tmp = readRequest(requestFD);
+    rawcontent = readRequest(requestFD);
     //cout << tmp << endl;
-    request = requestParser.parseRequest(tmp);
-    return initResponse(request);
+    request = requestParser.parseRequest(rawcontent);
+    return initResponse(request,rawcontent);
 }
 
 void Server::sendResponse(int requestFD, const string& response)
@@ -80,15 +80,15 @@ void Server::sendResponse(int requestFD, const string& response)
     close(requestFD);
 }
 
-string Server::initResponse(const stRequest& request)
+string Server::initResponse(const stRequest& request, const string& rawcontent)
 {
     stResponse response;
+
 
     stResponseInfo responseInfo = getResponseInfo(request);
     if(responseInfo.status == HTTP_200 && responseInfo.index > -1 && !locations[responseInfo.index].cgiPath.empty() && responseInfo.contentType == "text/html")
     {
-        cout << "asdasd" << endl;
-        string ret = runCGI(locations[responseInfo.index],request,responseInfo);
+        string ret = runCGI(locations[responseInfo.index],request,responseInfo,rawcontent);
         response = parseResponse(ret, responseInfo);
     }
     else
@@ -104,7 +104,7 @@ string Server::initResponse(const stRequest& request)
     return ret;
 }
 
-string Server::runCGI(const Location& location, const stRequest &request, const stResponseInfo &responseInfo)
+string Server::runCGI(const Location& location, const stRequest &request, const stResponseInfo &responseInfo, const string& rawcontent)
 {
     int fd[2];
     int fd2[2];
@@ -145,6 +145,13 @@ string Server::runCGI(const Location& location, const stRequest &request, const 
         string res;
         struct pollfd p_fd;
 
+        int index = rawcontent.find("\r\n\r\n");
+        string tmp = rawcontent;
+        if(index != rawcontent.npos)
+            tmp = rawcontent.substr(index + 4);
+        cout << tmp << endl;
+
+        write(fd2[1], tmp.c_str(),tmp.length());
 
         cout << close(fd[1]) << endl;
         cout << fd[0] << " " << fd[1] << endl;
@@ -207,10 +214,7 @@ char **Server::initEnv(const char *filePath, const stRequest& request, const str
     if(it != end)
         env[index++] = str_join("HTTP_COOKIE=",it->second.c_str());
     it = request.requestHeaders.find("Content-Length");
-    if(request.method == "POST")
-        env[index++] = str_join("CONTENT_LENGTH=","200");
-    //it = request.requestHeaders.find("Content-Length");
-    else if(it != end)
+    if(it != end)
         env[index++] = str_join("CONTENT_LENGTH=",it->second.c_str());
     it = request.requestHeaders.find("Content-Type");
     env[index++] = str_join("CONTENT_TYPE=",it != request.requestHeaders.end() ? it->second.c_str() : contentType.c_str());
@@ -297,13 +301,14 @@ int Server::isValidEndPoint(string& filePath, const string& method)
 string Server::readRequest(int requestFD)
 {
     int count;
-    char buffer[1024];
+    char buffer;
     string data;
+    unsigned int read_count = 0;
 
-    while((count = recv(requestFD, buffer, sizeof(buffer), MSG_DONTWAIT)) > 0)
+    while((count = recv(requestFD, &buffer, 1, MSG_DONTWAIT)) > 0 && read_count < CLIENT_LIMIT)
     {
-        buffer[count] = '\0';
         data += buffer;
+        read_count += count;
     }
     return data;
 }

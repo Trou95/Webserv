@@ -142,6 +142,7 @@ Server Malazgirt::initServer(stScope data)
     string server_name;
     vector<pair<int, string> > error_pages;
     map<string,vector<string> >::iterator iter;
+    unsigned int client_limit;
 
 
     iter = data.values.find("listen");
@@ -167,7 +168,10 @@ Server Malazgirt::initServer(stScope data)
     iter = data.values.find("error_page_403");
     error_pages.push_back(pair<int, string>(403, iter != data.values.end() ? DEFAULT_ERRORPAGE + str_trim(iter->second[0], ' ') : DEFAULT_ERRORPAGE "403.html"));
 
-    return Server(server_port,server_name,server_root, error_pages,filetypes);
+    iter = data.values.find("client_limit");
+    client_limit = iter != data.values.end() ? std::stoi(iter->second[0]) : DEFAULT_LIMIT;
+
+    return Server(server_port,server_name,server_root, error_pages, client_limit, filetypes);
 }
 
 

@@ -75,6 +75,7 @@ class Server
         string ROOT;
         string ERROR_PAGE_404;
         string ERROR_PAGE_403;
+        unsigned int CLIENT_LIMIT;
 
         vector<Location> locations;
         RequestParser requestParser;
@@ -83,8 +84,8 @@ class Server
 
         string readRequest(int requestFD);
         int isValidEndPoint(string& filePath, const string& method);
-        string runCGI(const Location& location, const stRequest& request, const stResponseInfo& responseInfo);
-        string initResponse(const stRequest& request);
+        string runCGI(const Location& location, const stRequest& request, const stResponseInfo& responseInfo,const string& rawcontent);
+        string initResponse(const stRequest& request, const string& rawcontent);
         stResponse parseResponse(string& response, const stResponseInfo& responseInfo);
         stResponseInfo getResponseInfo(const stRequest& request);
         inline string getResponseStatusType(const E_HTTP_STATUS& status);
@@ -95,15 +96,14 @@ class Server
         vector<string> getAllDirectoryies(const string& filePath, int hidden_files);
         string showDirectoryies(const string& endPoint, const string& filePath);
         bool isValidFile(const string& filePath);
-        bool isDirectory(const string& filePath);
+        bool isDirectory(const string& f ilePath);
 
         string getContentType(const string& fileExtension);
 
 
-
     public:
 
-        Server(int PORT,string NAME, string ROOT, vector<pair<int, string> > ERROR_PAGES, map<string,string>& filetypes);
+        Server(int PORT,string NAME, string ROOT, vector<pair<int, string> > ERROR_PAGES, unsigned int CLIENT_LIMIT, map<string,string>& filetypes);
 
         bool connect();
         void addLocation(stScope location);
