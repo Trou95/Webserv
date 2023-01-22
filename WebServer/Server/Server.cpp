@@ -51,10 +51,9 @@ bool Server::connect()
     return true;
 }
 
-void Server::HandleRequest(int requestFD)
+string Server::HandleRequest(int requestFD)
 {
     string tmp;
-    string response;
     stRequest request;
 
     tmp = readRequest(requestFD);
@@ -62,9 +61,25 @@ void Server::HandleRequest(int requestFD)
     cout << tmp << endl;
 
     request = requestParser.parseRequest(tmp);
-    response = initResponse(request);
-    send(requestFD, response.c_str(), response.length() ,MSG_DONTWAIT);
+    return initResponse(request);
+}
 
+void Server::sendResponse(int requestFD, const string& response)
+{
+    struct pollfd p_fd;
+
+    p_fd.fd = requestFD;
+    p_fd.events = POLLOUT;
+    int ret = poll(&p_fd, 1, 1000);
+    if(ret > 0)
+    {
+        if(p_fd.revents & POLLOUT)
+        {
+            for(int i = 0, size = response.length(); i < size; i++)
+                send(requestFD, &response[i], 1 ,MSG_DONTWAIT);
+
+        }
+    }
     close(requestFD);
 }
 
@@ -73,7 +88,7 @@ string Server::initResponse(const stRequest& request)
     stResponse response;
 
     stResponseInfo responseInfo = getResponseInfo(request);
-    if(responseInfo.status == HTTP_200 && !locations[responseInfo.index].cgiPath.empty() && responseInfo.contentType == "text/html")
+    if(responseInfo.status == HTTP_200 && responseInfo.index > -1 && !locations[responseInfo.index].cgiPath.empty() && responseInfo.contentType == "text/html")
     {
         string res = runCGI(locations[responseInfo.index],request,responseInfo);
         response = parseResponse(res, responseInfo);
@@ -219,12 +234,13 @@ stResponseInfo Server::getResponseInfo(const stRequest &request)
 {
     stResponseInfo response;
 
-    int index_location = isValidEndPoint(request.endPoint, request.method);
+    string filePath = requestParser.getPath(request.endPoint);
+    cout << "filepath " << filePath << endl;
+    int index_location = isValidEndPoint(filePath, request.method);
     if(index_location == -1) {
         response.status = HTTP_404;
         response.contentType = "text/html";
         response.info = this->ERROR_PAGE_404;
-        cout << "1" << endl;
     }
     else if(index_location == -2) {
         response.status = HTTP_403;
@@ -242,52 +258,38 @@ stResponseInfo Server::getResponseInfo(const stRequest &request)
         }
         tmp = ROOT + tmp;
         if(isValidFile(tmp) == false) {
-            response.status = HTTP_404;
+            if(filePath  == locations[index_location].endPoint) {
+                response.status = HTTP_200;
+                response.index = -1;
+                response.info = showDirectoryies(request.endPoint, ROOT + filePath + "/");
+            }
+            else {
+                response.status = HTTP_404;
+                response.info = this->ERROR_PAGE_404;
+            }
             response.contentType = "text/html";
-            response.info = this->ERROR_PAGE_404;
-            cout << "2" << endl;
         }
         else {
             response.status = HTTP_200;
             response.index = index_location;
             response.filePath = tmp;
+            response.info = FileReader::readFileBinary(tmp);
             response.contentType = getContentType(tmp.substr(tmp.find_last_of(".")));
-
-            cout << "file " << tmp << endl;
-
-            ifstream file(tmp, std::ios::ate | std::ios::binary);
-            auto size = file.tellg();
-            char *image = new char[size];
-            file.seekg(0, std::ios::beg);
-            file.read(image,size);
-            image[size] = 0;
-            file.close();
-            cout << "Size " << size << endl;
-            for(int i = 0; i < size; i++)
-                response.info += image[i];
-
-            cout << response.info.length() << endl;
-
-            std::ofstream file2("asdasd.jpeg", std::ios::binary);
-            file2 << response.info;
-
-
         }
     }
     return response;
 }
 
-int Server::isValidEndPoint(const string& request, const string& method)
+int Server::isValidEndPoint(string& filePath, const string& method)
 {
-    string tmp = requestParser.getPath(request);
     int size = locations.size() - 1;
 
-    if(tmp[tmp.length() - 1] == '/')
-        tmp.pop_back();
-    cout << "method " << tmp << endl;
+    if(filePath[filePath.length() - 1] == '/')
+        filePath.pop_back();
+    cout << "method " << filePath << endl;
     for(int i = size; i >= 0; i--)
     {
-        if(tmp == locations[i].endPoint)
+        if(filePath == locations[i].endPoint)
         {
             for(int n = locations[i].allowedMethods.size() - 1; n >= 0; n--)
             {
@@ -381,7 +383,7 @@ void Server::addLocation(stScope data)
     tmp.endPoint = data.args[0];
 
     iter = data.values.find("index");
-    tmp.index = iter != data.values.end() ? str_trim(iter->second[0], ' ') : "index.html";
+    tmp.index = iter != data.values.end() ? str_trim(iter->second[0], ' ') : "index2.html";
 
     iter = data.values.find("allowed_methods");
     if(iter != data.values.end())
@@ -412,6 +414,23 @@ string Server::getContentType(const string &fileExtension)
         map<string,string>::iterator it = filetypes.find(fileExtension);
         return it != filetypes.end() ? it->second : "text/html";
     }
+}
+
+string Server::showDirectoryies(const string& endPoint, const string &filePath)
+{
+    if(filePath.empty())
+        return "";
+
+    string url = endPoint;
+    if(isDirectory(url) == false)
+        url = requestParser.getPath(url);
+
+    string ret = "<html><head><title>" + filePath + "</title></head><body><ul>";
+    vector<string> directoryies = getAllDirectoryies(filePath, 0);
+    for(int i = 0; i < directoryies.size(); i++)
+        ret += "<li><a href=\"" + url + directoryies[i] + "\">" + directoryies[i] + "</a></li>";
+    ret += "</ul></body></html>";
+    return ret;
 }
 
 vector <string> Server::getAllDirectoryies(const string& filePath, int hidden_files)

@@ -17,6 +17,24 @@ string FileReader::readFile(const string& filepath)
     return res;
 }
 
+string FileReader::readFileBinary(const string &filePath)
+{
+    string res;
+    ifstream file(filePath, std::ios::ate | std::ios::binary);
+
+    if(file.is_open())
+    {
+        fpos_t size = file.tellg();
+        char *buffer = new char[size];
+        file.seekg(0, std::ios::beg);
+        file.read(buffer,size);
+        file.close();
+        for(fpos_t i = 0; i < size; i++)
+            res += buffer[i];
+    }
+    return res;
+}
+
 const string FileReader::getFileType(const string& filepath)
 {
     size_t index = filepath.find_last_of(".");

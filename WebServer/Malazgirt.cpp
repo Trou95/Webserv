@@ -87,6 +87,7 @@ void Malazgirt::runPoll(struct pollfd *pollfds, vector <vector<int> > &requests,
 {
     int ret;
     int count = request_count;
+    string response;
 
     while(count > 0)
     {
@@ -102,7 +103,8 @@ void Malazgirt::runPoll(struct pollfd *pollfds, vector <vector<int> > &requests,
                     int index = getServerIndexByRequestFD(pollfds[i].fd,requests);
                     if(index > -1)
                     {
-                        servers[index].HandleRequest(pollfds[i].fd);
+                        response = servers[index].HandleRequest(pollfds[i].fd);
+                        servers[index].sendResponse(pollfds[i].fd, response);
                         pollfds[i].fd = -1;
                         count--;
                     }

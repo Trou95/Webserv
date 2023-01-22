@@ -82,7 +82,7 @@ class Server
         static map<string,string> filetypes;
 
         string readRequest(int requestFD);
-        int isValidEndPoint(const string& request, const string& method);
+        int isValidEndPoint(string& filePath, const string& method);
         string runCGI(const Location& location, const stRequest& request, const stResponseInfo& responseInfo);
         string initResponse(const stRequest& request);
         stResponse parseResponse(string& response, const stResponseInfo& responseInfo);
@@ -97,13 +97,16 @@ class Server
 
         string getContentType(const string& fileExtension);
 
+        string showDirectoryies(const string& endPoint, const string& filePath);
+
     public:
 
         Server(int PORT,string NAME, string ROOT, vector<pair<int, string> > ERROR_PAGES, map<string,string>& filetypes);
 
         bool connect();
         void addLocation(stScope location);
-        void HandleRequest(int requestFD);
+        string HandleRequest(int requestFD);
+        void sendResponse(int requestFD, const string& response);
 
         const int getServerFD();
         const int getPort();

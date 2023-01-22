@@ -18,7 +18,7 @@ using std::pair;
 #define DEFAULT_PATH "www"
 #define DEFAULT_ROOT DEFAULT_PATH "/web"
 #define DEFAULT_ERRORPAGE DEFAULT_ROOT "/error-page/"
-#define DEFAULT_INDEX "index.html"
+#define DEFAULT_INDEX "index2.html"
 
 
 class Malazgirt

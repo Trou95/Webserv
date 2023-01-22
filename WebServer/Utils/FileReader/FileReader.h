@@ -16,6 +16,7 @@ class FileReader {
 
     public:
         static string readFile(const string& filepath);
+        static string readFileBinary(const string& filePath);
         static const string getFileType(const string& filepath);
 
 };
