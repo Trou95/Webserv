@@ -16,7 +16,6 @@ Server::Server(int PORT, std::string NAME, std::string ROOT, vector<pair<int, st
     }
 }
 
-
 bool Server::connect()
 {
     _serverFD = socket(AF_INET,SOCK_STREAM,0);
@@ -57,9 +56,7 @@ string Server::HandleRequest(int requestFD)
     stRequest request;
 
     tmp = readRequest(requestFD);
-
-    cout << tmp << endl;
-
+    //cout << tmp << endl;
     request = requestParser.parseRequest(tmp);
     return initResponse(request);
 }
@@ -90,14 +87,15 @@ string Server::initResponse(const stRequest& request)
     stResponseInfo responseInfo = getResponseInfo(request);
     if(responseInfo.status == HTTP_200 && responseInfo.index > -1 && !locations[responseInfo.index].cgiPath.empty() && responseInfo.contentType == "text/html")
     {
-        string res = runCGI(locations[responseInfo.index],request,responseInfo);
-        response = parseResponse(res, responseInfo);
+        cout << "asdasd" << endl;
+        string ret = runCGI(locations[responseInfo.index],request,responseInfo);
+        response = parseResponse(ret, responseInfo);
     }
     else
     {
-            response.responseHead = "HTTP/1.1 " + std::to_string(responseInfo.status) + " OK\r\n";
-            response.responseHead += "Content-Type: " + responseInfo.contentType + "\r\n";
-            response.responseHead += "Content-Length: " + std::to_string(responseInfo.info.length());
+            response.responseHead = "HTTP/1.1 " + std::to_string(responseInfo.status) + " " + getResponseStatusType(responseInfo.status);
+            response.responseHead += "\r\nContent-Type: " + responseInfo.contentType;
+            response.responseHead += "\r\nContent-Length: " + std::to_string(responseInfo.info.length());
             response.responseHead += "\r\n\r\n";
             response.responseData = responseInfo.info;
 
@@ -178,16 +176,11 @@ stResponse Server::parseResponse(string &response, const stResponseInfo &respons
 {
     stResponse res;
 
-
     int index = response.find("\r\n\r\n");
     if(index != response.npos)
     {
         res.responseHead = "HTTP/1.1 ";
-        res.responseHead += std::to_string(responseInfo.status) + " ";
-        if(responseInfo.status == HTTP_200)
-            res.responseHead += "OK\n";
-        else
-            res.responseHead += "NOT FOUND\n";
+        res.responseHead += std::to_string(responseInfo.status) + " " + getResponseStatusType(responseInfo.status);
         res.responseHead += response.substr(0,index);
         response = response.substr(index + 4);
         res.responseHead += "Content-Length: " + std::to_string(response.length());
@@ -286,7 +279,6 @@ int Server::isValidEndPoint(string& filePath, const string& method)
 
     if(filePath[filePath.length() - 1] == '/')
         filePath.pop_back();
-    cout << "method " << filePath << endl;
     for(int i = size; i >= 0; i--)
     {
         if(filePath == locations[i].endPoint)
@@ -302,14 +294,11 @@ int Server::isValidEndPoint(string& filePath, const string& method)
     return -1;
 }
 
-
-
 string Server::readRequest(int requestFD)
 {
     int count;
     char buffer[1024];
     string data;
-
 
     while((count = recv(requestFD, buffer, sizeof(buffer), MSG_DONTWAIT)) > 0)
     {
@@ -403,6 +392,16 @@ void Server::addLocation(stScope data)
         tmp.cgiPath = iter->second[0];
 
     locations.push_back(tmp);
+}
+
+inline string Server::getResponseStatusType(const E_HTTP_STATUS& status)
+{
+    if(status == HTTP_200)
+        return "OK";
+    else if(status == HTTP_404)
+        return "Not Found";
+    else
+        return "Forbidden";
 }
 
 string Server::getContentType(const string &fileExtension)

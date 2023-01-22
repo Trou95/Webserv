@@ -87,17 +87,19 @@ class Server
         string initResponse(const stRequest& request);
         stResponse parseResponse(string& response, const stResponseInfo& responseInfo);
         stResponseInfo getResponseInfo(const stRequest& request);
+        inline string getResponseStatusType(const E_HTTP_STATUS& status);
         char **initEnv(const char* filePath, const stRequest& request, const string& contentType);
 
         void uploadFile(const stRequest& request, const string& requestcontent,const string& type);
 
         vector<string> getAllDirectoryies(const string& filePath, int hidden_files);
+        string showDirectoryies(const string& endPoint, const string& filePath);
         bool isValidFile(const string& filePath);
         bool isDirectory(const string& filePath);
 
         string getContentType(const string& fileExtension);
 
-        string showDirectoryies(const string& endPoint, const string& filePath);
+
 
     public:
 

@@ -31,6 +31,7 @@ string FileReader::readFileBinary(const string &filePath)
         file.close();
         for(fpos_t i = 0; i < size; i++)
             res += buffer[i];
+        delete[] buffer;
     }
     return res;
 }
