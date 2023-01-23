@@ -26,8 +26,6 @@ stRequest RequestParser::parseRequest(const std::string &request)
     return res;
 }
 
-
-
 string RequestParser::parseURL(const string &request, const string& index)
 {
     string ret = request;
@@ -44,6 +42,7 @@ string RequestParser::parseURL(const string &request, const string& index)
 
 string RequestParser::getPath(string request)
 {
+
     int index = request.find_last_of('.');
     if(index != request.npos)
     {

@@ -65,7 +65,7 @@ class Location
 
 class Server
 {
-    private:
+    public:
 
         int _serverFD;
         struct sockaddr_in data;
@@ -96,7 +96,7 @@ class Server
         vector<string> getAllDirectoryies(const string& filePath, int hidden_files);
         string showDirectoryies(const string& endPoint, const string& filePath);
         bool isValidFile(const string& filePath);
-        bool isDirectory(const string& f ilePath);
+        bool isDirectory(const string& filePath);
 
         string getContentType(const string& fileExtension);
 

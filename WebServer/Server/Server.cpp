@@ -26,11 +26,13 @@ bool Server::connect()
     }
     fcntl(_serverFD, F_SETFL, O_NONBLOCK);
 
+
     int enable = 1;
     if(setsockopt(_serverFD, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0) {
         Log(LOG_INFO, "Error: %s socketopt",NAME.c_str());
         return false;
     }
+
 
     memset(&data, 0, sizeof(data));
     data.sin_family = AF_INET;
@@ -56,7 +58,6 @@ string Server::HandleRequest(int requestFD)
     stRequest request;
 
     rawcontent = readRequest(requestFD);
-    //cout << tmp << endl;
     request = requestParser.parseRequest(rawcontent);
     return initResponse(request,rawcontent);
 }
@@ -83,7 +84,6 @@ void Server::sendResponse(int requestFD, const string& response)
 string Server::initResponse(const stRequest& request, const string& rawcontent)
 {
     stResponse response;
-
 
     stResponseInfo responseInfo = getResponseInfo(request);
     if(responseInfo.status == HTTP_200 && responseInfo.index > -1 && !locations[responseInfo.index].cgiPath.empty() && responseInfo.contentType == "text/html")
@@ -122,10 +122,9 @@ string Server::runCGI(const Location& location, const stRequest &request, const 
     if(pid == 0)
     {
         char** tmp = new char*[3];
-        tmp[0] = "/Users/dev_gdemirta/.brew/bin/php-cgi";
+        tmp[0] = const_cast<char*>(location.cgiPath.c_str());
         tmp[1] = str_join("",responseInfo.filePath.c_str());
         tmp[2] = 0;
-
 
         char **env = initEnv(tmp[1],request,responseInfo.contentType);
 
@@ -146,15 +145,13 @@ string Server::runCGI(const Location& location, const stRequest &request, const 
         struct pollfd p_fd;
 
         int index = rawcontent.find("\r\n\r\n");
-        string tmp = rawcontent;
+        string bodyContent = rawcontent;
         if(index != rawcontent.npos)
-            tmp = rawcontent.substr(index + 4);
-        cout << tmp << endl;
+            bodyContent = rawcontent.substr(index + 4);
 
-        write(fd2[1], tmp.c_str(),tmp.length());
+        write(fd2[1], bodyContent.c_str(),bodyContent.length());
 
-        cout << close(fd[1]) << endl;
-        cout << fd[0] << " " << fd[1] << endl;
+        close(fd[1]);
         p_fd.fd = fd[0];
         p_fd.events = POLLIN;
 
@@ -219,11 +216,6 @@ char **Server::initEnv(const char *filePath, const stRequest& request, const str
     it = request.requestHeaders.find("Content-Type");
     env[index++] = str_join("CONTENT_TYPE=",it != request.requestHeaders.end() ? it->second.c_str() : contentType.c_str());
     env[index] = 0;
-
-    for (int i = 0; env[i]; ++i) {
-        cout << env[i] << endl;
-    }
-
     return env;
 }
 
@@ -232,7 +224,6 @@ stResponseInfo Server::getResponseInfo(const stRequest &request)
     stResponseInfo response;
 
     string filePath = requestParser.getPath(request.endPoint);
-    cout << "filepath " << filePath << endl;
     int index_location = isValidEndPoint(filePath, request.method);
     if(index_location == -1) {
         response.status = HTTP_404;
@@ -281,8 +272,10 @@ int Server::isValidEndPoint(string& filePath, const string& method)
 {
     int size = locations.size() - 1;
 
-    if(filePath[filePath.length() - 1] == '/')
+    int len = filePath.length();
+    if(len > 1 && filePath[len - 1] == '/')
         filePath.pop_back();
+
     for(int i = size; i >= 0; i--)
     {
         if(filePath == locations[i].endPoint)
@@ -348,7 +341,7 @@ void Server::uploadFile(const stRequest &request, const string &requestcontent, 
            cout << request.requestHeaders.find("Content-Length")->second << " " << size << endl;
            cout << "--------" << endl;
 
-           std::ofstream file("www/web/test/" + file_name, std::ios::binary);
+           std::ofstream file("www/web/bonus/" + file_name, std::ios::binary);
            file << file_content;
            file.close();
 

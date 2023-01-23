@@ -51,7 +51,8 @@ int Malazgirt::acceptRequest(vector <vector<int> > &requests)
     int requestFD;
 
     request_count = 0;
-    for(int i = servers.size() - 1; i >= 0; i--)
+    int size = servers.size();
+    for(int i = 0; i < size; i++)
     {
         vector<int> tmp;
 
@@ -71,6 +72,7 @@ int Malazgirt::acceptRequest(vector <vector<int> > &requests)
 void Malazgirt::initPoll(struct pollfd* pollfds, vector <vector<int> > &requests)
 {
     int index = 0;
+
 
     for(int i = requests.size() - 1; i >= 0; i--)
     {
@@ -117,11 +119,9 @@ void Malazgirt::runPoll(struct pollfd *pollfds, vector <vector<int> > &requests,
 int Malazgirt::getServerIndexByRequestFD(int requestFD, vector <vector<int> > &requests)
 {
     for(int i = requests.size() - 1; i >= 0; i--)
-    {
         for(int n = requests[i].size() - 1; n >= 0; n--)
             if(requestFD == requests[i][n])
                 return i;
-    }
     return -1;
 }
 
