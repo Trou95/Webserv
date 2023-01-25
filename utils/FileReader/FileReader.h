@@ -4,12 +4,20 @@
 #include <iostream>
 #include <fstream>
 
-class FileReader{
-private:
-    static long long getFileLen(const std::string filepath);
-public:
-    static std::string readFile(const std::string filepath);
-    static std::string getFileType(std::string filepath);
+using std::string;
+using std::ifstream;
+
+class FileReader {
+
+    private:
+
+        static long long getFileLen(const string& filepath);
+
+
+    public:
+        static string readFile(const string& filepath);
+        static string readFileBinary(const string& filePath);
+        static const string getFileType(const string& filepath);
 
 };
 

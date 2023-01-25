@@ -27,7 +27,6 @@ class Malazgirt
     private:
         const string CONFIG_PATH;
         vector<stScope> SERVER_CONFIG;
-
         string CURRENT_DIRECTORY;
 
         vector<Server> servers;
@@ -52,6 +51,5 @@ class Malazgirt
     public:
 
         Malazgirt(const string& configPath);
-
 
 };

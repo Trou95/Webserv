@@ -22,12 +22,11 @@
 #include "../Utils/FileReader/FileReader.h"
 #include "../Utils/Helper.h"
 
-#define MAX_REQUEST 10
+#define MAX_REQUEST 32
 
 using std::string;
 using std::vector;
 using std::map;
-
 
 enum E_HTTP_STATUS
 {
@@ -51,7 +50,6 @@ struct stResponseInfo
     string filePath;
 };
 
-
 class Location
 {
     public:
@@ -65,7 +63,7 @@ class Location
 
 class Server
 {
-    public:
+    private:
 
         int _serverFD;
         struct sockaddr_in data;
@@ -90,8 +88,6 @@ class Server
         stResponseInfo getResponseInfo(const stRequest& request);
         inline string getResponseStatusType(const E_HTTP_STATUS& status);
         char **initEnv(const char* filePath, const stRequest& request, const string& contentType);
-
-        void uploadFile(const stRequest& request, const string& requestcontent,const string& type);
 
         vector<string> getAllDirectoryies(const string& filePath, int hidden_files);
         string showDirectoryies(const string& endPoint, const string& filePath);

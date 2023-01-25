@@ -21,7 +21,7 @@ bool Server::connect()
     _serverFD = socket(AF_INET,SOCK_STREAM,0);
 
     if(_serverFD < 0) {
-        Log(LOG_INFO,"Error: %s socket",NAME.c_str());
+        Log(LOG_ERROR,"Error: %s socket",NAME.c_str());
         return false;
     }
     fcntl(_serverFD, F_SETFL, O_NONBLOCK);
@@ -40,12 +40,12 @@ bool Server::connect()
     data.sin_port = htons(PORT);
 
     if(bind(_serverFD, (struct sockaddr*)&data, sizeof(data)) < 0) {
-        Log(LOG_INFO, "Error: %s bind",NAME.c_str());
+        Log(LOG_ERROR, "Error: %s bind",NAME.c_str());
         return false;
     }
 
     if(listen(_serverFD,MAX_REQUEST) < 0) {
-        Log(LOG_INFO, "Error: %s listen",NAME.c_str());
+        Log(LOG_ERROR, "Error: %s listen",NAME.c_str());
         return false;
     }
 
@@ -304,62 +304,6 @@ string Server::readRequest(int requestFD)
         read_count += count;
     }
     return data;
-}
-
-void Server::uploadFile(const stRequest &request, const string &requestcontent, const string& type)
-{
-   string file_boundary = "--" + type.substr(type.find("boundary=") + 9);
-   int start = requestcontent.find("\r\n\r\n") + 4;
-   int len = file_boundary.length();
-
-
-   int file_start = requestcontent.find(file_boundary,start);
-   while(file_start != requestcontent.npos)
-   {
-       int index = requestcontent.find("filename=",file_start + len);
-       if(index != requestcontent.npos)
-       {
-           string file_name;
-
-           int i;
-           for(i = index + 10; requestcontent[i] && requestcontent[i] != '\"'; i++)
-               file_name += requestcontent[i];
-
-           start = requestcontent.find("\r\n\r\n",i) + 4;
-           file_start = requestcontent.find(file_boundary, start);
-
-           int size = (file_start - start) - 2;
-
-           string file_content;
-           for(int index = start; index < start + size; index++)
-           {
-               cout << (int)requestcontent[index];
-               file_content += requestcontent[index];
-           }
-
-           cout << file_start << " " << start << endl;
-           cout << request.requestHeaders.find("Content-Length")->second << " " << size << endl;
-           cout << "--------" << endl;
-
-           std::ofstream file("www/web/bonus/" + file_name, std::ios::binary);
-           file << file_content;
-           file.close();
-
-           std::ifstream file2("image.jpeg", std::ios::binary);
-           std::ofstream file3("image.txt", std::ios::binary);
-           file3 << file2.rdbuf();
-           file3.close();
-
-           cout << file2.tellg() << " " << file_content.length() << endl;
-
-           std::ofstream file4("image_2.txt", std::ios::binary);
-           file4 << file_content;
-           file4.close();
-       }
-       else
-           file_start = requestcontent.find(file_boundary, file_start + len);
-   }
-
 }
 
 void Server::addLocation(stScope data)

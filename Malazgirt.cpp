@@ -1,6 +1,5 @@
 #include "Malazgirt.h"
 
-
 Malazgirt::Malazgirt(const std::string &configPath) : CONFIG_PATH(configPath)
 {
     char buffer[PATH_MAX];
@@ -42,7 +41,6 @@ void Malazgirt::Run()
         }
         requests.clear();
     }
-
 }
 
 int Malazgirt::acceptRequest(vector <vector<int> > &requests)
@@ -71,7 +69,6 @@ int Malazgirt::acceptRequest(vector <vector<int> > &requests)
 void Malazgirt::initPoll(struct pollfd* pollfds, vector <vector<int> > &requests)
 {
     int index = 0;
-
 
     for(int i = requests.size() - 1; i >= 0; i--)
     {
@@ -218,4 +215,3 @@ const string Malazgirt::readConfig()
     string res = FileReader::readFile(this->CONFIG_PATH);
     return res;
 }
-

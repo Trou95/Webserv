@@ -1,6 +1,5 @@
-NAME = Server
-SRC = utils/FileReader/*.cpp utils/Logger/*.cpp utils/*.cpp Parser/cgiparser/*.cpp *.cpp
-CC = c++
+NAME =
+SRC = Utils/FileReader/*.cpp Utils/Parser/Cgi/*.cpp Utils/Parser/Request/*.cpp Utils/*.cpp Server/*.cpp *.cpp -g
 
 all:
-	$(CC) $(SRC) -o $(NAME)
+	c++ $(SRC)
