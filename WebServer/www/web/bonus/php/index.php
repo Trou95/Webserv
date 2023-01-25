@@ -27,7 +27,7 @@ if(isset($_POST["username"]))
                   </form>
                   <div id="create-account-wrap">
                       <p>Not a member? <a href="#">Create Account</a><p>
-                  </div>'
+                  </div>
 
 
     <?php } else  { ?>

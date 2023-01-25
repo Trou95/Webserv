@@ -51,8 +51,7 @@ int Malazgirt::acceptRequest(vector <vector<int> > &requests)
     int requestFD;
 
     request_count = 0;
-    int size = servers.size();
-    for(int i = 0; i < size; i++)
+    for(int i = 0; i < servers_size; i++)
     {
         vector<int> tmp;
 
@@ -134,6 +133,7 @@ void Malazgirt::connectServers()
        else
            Log(LOG_INFO,"Info: Server %s connected on port: %d",servers[i].getName().c_str(), servers[i].getPort());
     }
+    servers_size = servers.size();
 }
 
 Server Malazgirt::initServer(stScope data)

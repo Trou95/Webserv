@@ -31,6 +31,7 @@ class Malazgirt
         string CURRENT_DIRECTORY;
 
         vector<Server> servers;
+        int servers_size;
 
         map<string,string> filetypes;
 
